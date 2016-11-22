@@ -81,3 +81,153 @@ Knox Server will be a Service Provides of Ipsilon.
     --saml-secure-setup | Disable two way SSL
 
     This command will configure a Service Provider on Ipisilon and generate three files on the current directory: certificate.pem, certificate.key and metadata.xml.
+
+4. Export IPA/Ipsilon certificate and root certificate to file:
+
+    ```bash
+    openssl x509 -in <(openssl s_client -connect ipsilon.example.com:443 -prexit 2>/dev/null) > ipa.pem
+    cat /etc/ipa/ca.crt >> ipa.pem
+    ```
+
+5. Import IPA/Ipsilon certificate and root certificate to Java Truststore:
+
+    ```bash
+    $JAVA_HOME/bin/keytool -import -keystore $JAVA_HOME/jre/lib/security/cacerts -file ipa.pem -alias ipa
+    ```
+
+6. Deploy Knox SSO Topology (``/etc/knox/topologies/knoxsso.xml`` or use Ambari to configure it). Template below consider Knox Server on ``hdp24.example.com:8443`` and Ipsilon Server on ``ipsilon.example.com/idp``
+
+```xml
+<topology>
+   <gateway>
+     <provider>
+         <role>federation</role>
+         <name>pac4j</name>
+         <enabled>true</enabled>
+         <param>
+               <name>pac4j.callbackUrl</name>
+              <value>https://hdp24.example.com:8443/gateway/knoxsso/api/v1/websso</value>
+         </param>
+
+         <param>
+           <name>clientName</name>
+           <value>SAML2Client</value>
+         </param>
+
+         <param>
+           <name>saml.identityProviderMetadataPath</name>
+           <value>https://ipsilon.example.com/idp/saml2/metadata</value>
+         </param>
+
+         <param>
+            <name>saml.serviceProviderMetadataPath</name>
+           <value>/tmp/hdp24.example.com/metadata.xml</value>
+         </param>
+
+         <param>
+           <name>saml.serviceProviderEntityId</name>
+           <value>https://hdp24.example.com:8443/gateway/knoxsso/api/v1/websso?pac4jCallback=true&amp;client_name=SAML2Client</value>
+         </param>
+     </provider>
+     <provider>
+         <role>identity-assertion</role>
+         <name>Default</name>
+         <enabled>true</enabled>
+     </provider>
+   </gateway>
+
+   <service>
+       <role>KNOXSSO</role>
+       <param>
+         <name>knoxsso.cookie.secure.only</name>
+         <value>false</value>
+      </param>
+      <param>
+        <name>knoxsso.token.ttl</name>
+        <value>100000</value>
+      </param>
+      <param>
+         <name>knoxsso.redirect.whitelist.regex</name>
+         <value>^https?:\/\/(hdp24\.example\.com|localhost|127\.0\.0\.1|0:0:0:0:0:0:0:1|::1):[0-9].*$</value>
+      </param>
+   </service>
+</topology>
+```
+
+Below you can find a description of each parameter set:
+
+Property Name | Description
+--------------------- | :-------------------------------:
+pac4j.callbackUrl | URL used by pack4j. Should match the knoxsso topology URL
+clientName | ``SAML2Client`` is used for SAML2 client on pac4j
+saml.identityProviderMetadataPath | It's the IDP Metadata URL, on Ipsilon use directory ``saml2/metadata`` on URL (ex: ``https://ipsilon.example.com/idp/saml2/metadata``)
+saml.serviceProviderMetadataPath | This parameter is configured to workaround an existing bug, it can be configured to any folder. If you don't configure this entry properly, you will get a NullPointerException on Java
+saml.serviceProviderEntityId | This is the ID of the Service Provider on Ipsilon, it should be ``pac4j.callbackUrl`` + ``?pac4jCallback=true&amp;client_name=SAML2Client``
+identity-assertion | Default rule will work. If you want to map some users to different usernames, this is the parameter to be changed
+knoxsso.cookie.secure.only | ``True`` if HTTPS is enabled on all URL provided by Knox, otherwise must be ``false``
+knoxsso.token.ttl | Time to live of the cookie in seconds, after this time cookie will be invalid and a new authentication from Ipsilon will be required.
+knoxsso.redirect.whitelist.regex | Regex that should be matched for Knox to redirect URL to Ipsilon
+
+8) Extract the Knox Certificate from Gateway Keystore, which will be used on Ambari and Ranger configuration.
+
+```bash
+JAVA_HOME/bin/keytool -export -alias gateway-identity -rfc -file knox.pem -keystore /usr/hdp/current/knox-server/data/security/keystores/gateway.jks
+
+```
+
+7) Configure Ambari UI for KnoxSSO. On Ambari Server Host run the command:
+
+```bash
+root@hdp24 ~]# ambari-server setup-sso
+Using python  /usr/bin/python
+Setting up SSO authentication properties...
+Do you want to configure SSO authentication [y/n] (y)?y
+Provider URL [URL] (https://hdp24.example.com:8443/gateway/knoxsso/api/v1/websso):
+Public Certificate pem (stored) (empty line to finish input):
+MIIDCzCCAfOgAwIBAgIJAOE0SBrVjLOaMA0GCSqGSIb3DQEBCwUAMBwxGjAYBgNV
+BAMMEWhkcDI0LmV4YW1wbGUuY29tMB4XDTE2MTExODEzMzIwNloXDTIxMTExNzEz
+MzIwNlowHDEaMBgGA1UEAwwRaGRwMjQuZXhhbXBsZS5jb20wggEiMA0GCSqGSIb3
+DQEBAQUAA4IBDwAwggEKAoIBAQDC6bBZAdQPUik1ahpD3kiKpEjJ0L/yZOvbxGPJ
+ig8StHR4pSxV7e15blKg5r+LGxvh63tKb/Ju7e66hVto0W2M3phXDR1WhQBhLg+2
+UGBypYVQaSibjkmXMXeNx514T+2rXmdcrVuZBCzMf67dsa5lPTWwLjWZh+RlLmhM
+iVWfGiN9RRDCmBunCPyZRPE1vqDK8LZVtNTjgPcbMM+Zd9ozegTZhMiyw3YmYu2z
+iG29VbOQV52zyv2jQSpXZayNDSWJxKm5g3oSU54PYCV0Psl+YKKbCr7NwAAuih11
+hHqIN9k1oWAfrEz56BOuNbbKtWx2hU9Dnrll7kJ72wJewdeBAgMBAAGjUDBOMB0G
+A1UdDgQWBBRcmkaQywf/BMuRyDW4wVT5Mv5fQDAfBgNVHSMEGDAWgBRcmkaQywf/
+BMuRyDW4wVT5Mv5fQDAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQBd
+GwZXq5Es0IzDT9cUeFVBhubdhyn0rMuQckdarRI0iisaCwrSQwBICSVvszckLYcx
+fuzhfpjmAtsj5zJ0oT7eZJWNuHznPQMAiAz9BKnarHV21TvSkVMHYOUL2KoiWPxo
+2t7SjmfukX5zAxSCeyimOMEhwT8AXJldEHPTCSleDfFz8HPJsB3mwhhf8GHK6V99
+YQC2zpRfb+u1SK+EjVXgsdc7Y0pfa08oNgGK/WzvSYaol4ejy55wyG5hcwhVr5hr
+QMFGI0Q4MxyU54W6wPu3mm/vNcFSgoyLO9UHG3dUeuEHS/dzG9dfNcNe6MTYquvZ
+iQM5c1FKPrAQS5qPZWaR
+
+Do you want to configure advanced properties [y/n] (n) ?
+Ambari Server 'setup-sso' completed successfully.
+[root@hdp24 ~]#
+
+```
+
+**NOTE:** Do not paste the Header and Footer of certificate when asked for Public Certificate, which is the Knox Certificate.
+**NOTE:** LDAP Authentication is required for SSO to work properly, and need to be configured before setting SSO.
+
+8) Restart Ambari Server to apply new configuration
+
+9 Configure Ranger UI for KnoxSSO. On Ambari Server, go to Ranger -> Configs -> Advanced and set Knox SSO Settings:
+
+![Ranger UI SSO](/images/RangerSSO.png)
+Format: ![Alt Text](url)
+
+
+**NOTE:** Do not paste the Header and Footer of certificate when asked for Public Certificate, which is the Knox Certificate.
+
+10) Restart Ranger to apply new configuration
+
+After those steps, all login requests will be redirected to Ipsilon and after authentication, will allow access to both Ranger and Ambari UI.
+
+**Notes: **
+
+- On Ambari Server, to login with local users access the url: http://<ambari-server>:8080/#/login/local
+
+- On Ranger, to login with local users access the url: http://<ambari-server>:6080/locallogin
+
