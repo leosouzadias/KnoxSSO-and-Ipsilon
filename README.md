@@ -225,7 +225,7 @@ Ambari Server 'setup-sso' completed successfully.
 
 After those steps, all login requests will be redirected to Ipsilon and after authentication, will allow access to both Ranger and Ambari UI.
 
-**Notes: **
+**FINAL NOTES:**
 
 - On Ambari Server, to login with local users access the url: http://<ambari-server>:8080/#/login/local
 
