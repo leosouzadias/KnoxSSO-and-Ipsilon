@@ -12,7 +12,7 @@ Knox Server will be a Service Provides of Ipsilon.
 
 ## Installation
 
-1. Install and Configure Ipsilon Server with SAML2 support:
+1. Install and Configure Ipsilon Server with SAML2 support: 
     ```
     ipsilon-server-install --saml2=yes --form=yes --gssapi=yes --ipa=yes  --info-sssd=yes
     ```
@@ -61,8 +61,7 @@ Knox Server will be a Service Provides of Ipsilon.
 3. Install Ipsilon Client on Knox Server. Command is using "ipsilon.example.com" as the Ipsilon Server FQDN.
 
     ```bash
-    ipsilon-client-install --saml-idp-url https://ipsilon.example.com/idp --saml-sp-name knox  --saml-auth "/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" --saml-no-httpd 
-    --saml-sp-post "/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" --saml-sp "/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" --saml-sp-logout="/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" --port 8443 --saml-secure-setup=false
+    ipsilon-client-install --saml-idp-url https://ipsilon.example.com/idp --saml-sp-name knox  --saml-auth "/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" --saml-no-httpd     --saml-sp-post "/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" --saml-sp "/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" --saml-sp-logout="/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" --port 8443 --saml-secure-setup=false
     ```
 
     It will ask for admin password on Ipsilon.
