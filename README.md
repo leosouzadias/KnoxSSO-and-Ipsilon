@@ -216,6 +216,7 @@ Ambari Server 'setup-sso' completed successfully.
 9 Configure Ranger UI for KnoxSSO. On Ambari Server, go to Ranger -> Configs -> Advanced and set Knox SSO Settings:
 
 ![Ranger UI SSO](/images/Ranger.png)
+Format: ![Ranger UI SSO](url)
 
 **NOTE:** Do not paste the Header and Footer of certificate when asked for Public Certificate, which is the Knox Certificate.
 
