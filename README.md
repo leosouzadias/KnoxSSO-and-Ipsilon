@@ -14,7 +14,8 @@ Knox Server will be a Service Provides of Ipsilon.
 
 1) Install and Configure Ipsilon Server with SAML2 support:
 
-```ipsilon-server-install --saml2=yes --form=yes --gssapi=yes --ipa=yes  --info-sssd=yes
+```
+ipsilon-server-install --saml2=yes --form=yes --gssapi=yes --ipa=yes  --info-sssd=yes
 ```
 
 2) Patch the Ipsilon Server to fix NameIDPolicy bug (https://pagure.io/ipsilon/pull-request/44). Patch is not included on version 1.0.0 of Ipsilon that can be downloaded from EPEL.
@@ -62,9 +63,8 @@ index 6cbf5ab..6d46ad2 100644
 3) Install Ipsilon Client on Knox Server. Command is using "ipsilon.example.com" as the Ipsilon Server FQDN.
 
 ```bash
-ipsilon-client-install --saml-idp-url https://ipsilon.example.com/idp --saml-sp-name knox  --saml-auth "/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" --saml-no-httpd \
---saml-sp-post "/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" --saml-sp "/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" \
---saml-sp-logout="/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" --port 8443 --saml-secure-setup=false
+ipsilon-client-install --saml-idp-url https://ipsilon.example.com/idp --saml-sp-name knox  --saml-auth "/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" --saml-no-httpd 
+--saml-sp-post "/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" --saml-sp "/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" --saml-sp-logout="/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" --port 8443 --saml-secure-setup=false
 ```
 
 It will ask for admin password on Ipsilon.
