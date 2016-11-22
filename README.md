@@ -4,21 +4,21 @@ This tutorial will provide the steps to install, configure and integrate Ipsilon
 Knox Server will be a Service Provides of Ipsilon.
 
 ## Requirements
-1) Apache Knox installed
-2) Apache Ambari Server installed (for Ambari UI SSO)
-3) Apache Ranger installed (from Ranger UI SSO)
-4) IPA installed and configured
+1. Apache Knox installed
+2. Apache Ambari Server installed (for Ambari UI SSO)
+3. Apache Ranger installed (from Ranger UI SSO)
+4. IPA installed and configured
 
 
 ## Installation
 
-1) Install and Configure Ipsilon Server with SAML2 support:
+1. Install and Configure Ipsilon Server with SAML2 support:
 
 ```
 ipsilon-server-install --saml2=yes --form=yes --gssapi=yes --ipa=yes  --info-sssd=yes
 ```
 
-2) Patch the Ipsilon Server to fix NameIDPolicy bug (https://pagure.io/ipsilon/pull-request/44). Patch is not included on version 1.0.0 of Ipsilon that can be downloaded from EPEL.
+2. Patch the Ipsilon Server to fix NameIDPolicy bug (https://pagure.io/ipsilon/pull-request/44). Patch is not included on version 1.0.0 of Ipsilon that can be downloaded from EPEL.
 
 ```diff
 From e23eead22c21258c3a0ef22a65f8e1aebc115b77 Mon Sep 17 00:00:00 2001
@@ -60,7 +60,7 @@ index 6cbf5ab..6d46ad2 100644
              for nameid in allowed:
 ```
 
-3) Install Ipsilon Client on Knox Server. Command is using "ipsilon.example.com" as the Ipsilon Server FQDN.
+3. Install Ipsilon Client on Knox Server. Command is using "ipsilon.example.com" as the Ipsilon Server FQDN.
 
 ```bash
 ipsilon-client-install --saml-idp-url https://ipsilon.example.com/idp --saml-sp-name knox  --saml-auth "/gateway/knoxsso/api/v1/websso?pac4jCallback=true&client_name=SAML2Client" --saml-no-httpd 
